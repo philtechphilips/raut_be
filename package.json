@@ -8,7 +8,8 @@
     "build": "nest build",
     "start": "node dist/main.js",
     "start:prod": "node dist/main.js",
-    "migration:run": "npm run build && node -e \"require('reflect-metadata'); const { DataSource } = require('typeorm'); const { User } = require('./dist/modules/auth/models/user.model'); const { Project, Endpoint } = require('./dist/modules/project/models/project.model'); const { UserRequestHistory } = require('./dist/modules/request-history/models/request-history.model'); const { UserGithubConnection } = require('./dist/modules/github/models/user-github-connection.model'); const { InitUuidSchema1715139000000 } = require('./dist/migrations/1715139000000-InitUuidSchema'); const { IntIdsToUuid1715140000000 } = require('./dist/migrations/1715140000000-IntIdsToUuid'); const ds = new DataSource({ type: 'mysql', host: process.env.DB_HOST || 'localhost', port: Number(process.env.DB_PORT) || 3306, username: process.env.DB_USERNAME || process.env.DB_USER || 'root', password: process.env.DB_PASSWORD || '', database: process.env.DB_NAME || 'routiq_db', entities: [User, Project, Endpoint, UserRequestHistory, UserGithubConnection], migrations: [InitUuidSchema1715139000000, IntIdsToUuid1715140000000] }); ds.initialize().then(() => ds.runMigrations()).then(() => ds.destroy()).catch((e) => { console.error(e); process.exit(1); });\""
+    "migration:run": "npm run build && node -r dotenv/config -e \"require('reflect-metadata'); const { DataSource } = require('typeorm'); const { User } = require('./dist/modules/auth/models/user.model'); const { Project, Endpoint } = require('./dist/modules/project/models/project.model'); const { UserRequestHistory } = require('./dist/modules/request-history/models/request-history.model'); const { UserGithubConnection } = require('./dist/modules/github/models/user-github-connection.model'); const { InitUuidSchema1715139000000 } = require('./dist/migrations/1715139000000-InitUuidSchema'); const { IntIdsToUuid1715140000000 } = require('./dist/migrations/1715140000000-IntIdsToUuid'); const ds = new DataSource({ type: 'mysql', host: process.env.DB_HOST || 'localhost', port: Number(process.env.DB_PORT) || 3306, username: process.env.DB_USERNAME || process.env.DB_USER || 'root', password: process.env.DB_PASSWORD || '', database: process.env.DB_NAME || 'routiq_db', entities: [User, Project, Endpoint, UserRequestHistory, UserGithubConnection], migrations: [InitUuidSchema1715139000000, IntIdsToUuid1715140000000] }); ds.initialize().then(() => ds.runMigrations()).then(() => ds.destroy()).catch((e) => { console.error(e); process.exit(1); });\"",
+    "migration:run:prod": "DOTENV_CONFIG_PATH=.env npm run migration:run"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.15",
@@ -22,6 +23,7 @@
     "bullmq": "^5.76.5",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "dotenv": "^17.4.2",
     "glob": "^10.4.5",
     "ioredis": "^5.10.1",
     "mysql2": "^3.22.1",
