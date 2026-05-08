@@ -22,13 +22,13 @@ export class IntIdsToUuid1715140000000 implements MigrationInterface {
       ]);
 
       // Users
-      await queryRunner.query("ALTER TABLE `users` ADD COLUMN IF NOT EXISTS `id_uuid` char(36) NULL");
+      await this.addColumnIfMissing(queryRunner, 'users', 'id_uuid', 'char(36) NULL');
       await queryRunner.query("UPDATE `users` SET `id_uuid` = UUID() WHERE `id_uuid` IS NULL");
       await queryRunner.query("ALTER TABLE `users` MODIFY `id_uuid` char(36) NOT NULL");
 
       // Projects
-      await queryRunner.query("ALTER TABLE `projects` ADD COLUMN IF NOT EXISTS `id_uuid` char(36) NULL");
-      await queryRunner.query("ALTER TABLE `projects` ADD COLUMN IF NOT EXISTS `userId_uuid` char(36) NULL");
+      await this.addColumnIfMissing(queryRunner, 'projects', 'id_uuid', 'char(36) NULL');
+      await this.addColumnIfMissing(queryRunner, 'projects', 'userId_uuid', 'char(36) NULL');
       await queryRunner.query("UPDATE `projects` SET `id_uuid` = UUID() WHERE `id_uuid` IS NULL");
       await queryRunner.query(
         "UPDATE `projects` p JOIN `users` u ON u.`id` = p.`userId` SET p.`userId_uuid` = u.`id_uuid`",
@@ -37,8 +37,8 @@ export class IntIdsToUuid1715140000000 implements MigrationInterface {
       await queryRunner.query("ALTER TABLE `projects` MODIFY `userId_uuid` char(36) NOT NULL");
 
       // Endpoints
-      await queryRunner.query("ALTER TABLE `endpoints` ADD COLUMN IF NOT EXISTS `id_uuid` char(36) NULL");
-      await queryRunner.query("ALTER TABLE `endpoints` ADD COLUMN IF NOT EXISTS `projectId_uuid` char(36) NULL");
+      await this.addColumnIfMissing(queryRunner, 'endpoints', 'id_uuid', 'char(36) NULL');
+      await this.addColumnIfMissing(queryRunner, 'endpoints', 'projectId_uuid', 'char(36) NULL');
       await queryRunner.query("UPDATE `endpoints` SET `id_uuid` = UUID() WHERE `id_uuid` IS NULL");
       const projectsHasLegacyId = !!(await this.columnType(queryRunner, 'projects', 'id'));
       const unresolvedEndpointProjectRefs = await this.scalarCount(
@@ -57,11 +57,17 @@ export class IntIdsToUuid1715140000000 implements MigrationInterface {
       await queryRunner.query("ALTER TABLE `endpoints` MODIFY `projectId_uuid` char(36) NOT NULL");
 
       // GitHub connections
-      await queryRunner.query(
-        "ALTER TABLE `user_github_connections` ADD COLUMN IF NOT EXISTS `id_uuid` char(36) NULL",
+      await this.addColumnIfMissing(
+        queryRunner,
+        'user_github_connections',
+        'id_uuid',
+        'char(36) NULL',
       );
-      await queryRunner.query(
-        "ALTER TABLE `user_github_connections` ADD COLUMN IF NOT EXISTS `userId_uuid` char(36) NULL",
+      await this.addColumnIfMissing(
+        queryRunner,
+        'user_github_connections',
+        'userId_uuid',
+        'char(36) NULL',
       );
       await queryRunner.query(
         "UPDATE `user_github_connections` SET `id_uuid` = UUID() WHERE `id_uuid` IS NULL",
@@ -77,8 +83,11 @@ export class IntIdsToUuid1715140000000 implements MigrationInterface {
       );
 
       // Request history
-      await queryRunner.query(
-        "ALTER TABLE `user_request_history` ADD COLUMN IF NOT EXISTS `userId_uuid` char(36) NULL",
+      await this.addColumnIfMissing(
+        queryRunner,
+        'user_request_history',
+        'userId_uuid',
+        'char(36) NULL',
       );
       await queryRunner.query(
         "UPDATE `user_request_history` h JOIN `users` u ON u.`id` = h.`userId` SET h.`userId_uuid` = u.`id_uuid`",
@@ -130,8 +139,11 @@ export class IntIdsToUuid1715140000000 implements MigrationInterface {
       await this.addPrimaryKeyIfMissing(queryRunner, 'endpoints', 'id');
       await this.addPrimaryKeyIfMissing(queryRunner, 'user_github_connections', 'id');
 
-      await queryRunner.query(
-        'ALTER TABLE `user_github_connections` ADD UNIQUE INDEX IF NOT EXISTS `IDX_user_github_connections_userId` (`userId`)',
+      await this.addUniqueIndexIfMissing(
+        queryRunner,
+        'user_github_connections',
+        'IDX_user_github_connections_userId',
+        ['userId'],
       );
 
       if (!(await this.foreignKeyExists(queryRunner, 'projects', 'FK_projects_userId_users_id'))) {
@@ -197,6 +209,18 @@ export class IntIdsToUuid1715140000000 implements MigrationInterface {
     }
   }
 
+  private async addColumnIfMissing(
+    queryRunner: QueryRunner,
+    table: string,
+    column: string,
+    definition: string,
+  ): Promise<void> {
+    const col = await this.columnType(queryRunner, table, column);
+    if (!col) {
+      await queryRunner.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${definition}`);
+    }
+  }
+
   private async addPrimaryKeyIfMissing(
     queryRunner: QueryRunner,
     table: string,
@@ -241,6 +265,28 @@ export class IntIdsToUuid1715140000000 implements MigrationInterface {
       [table, name],
     )) as Array<{ CONSTRAINT_NAME: string }>;
     return rows.length > 0;
+  }
+
+  private async addUniqueIndexIfMissing(
+    queryRunner: QueryRunner,
+    table: string,
+    indexName: string,
+    columns: string[],
+  ): Promise<void> {
+    const rows = (await queryRunner.query(
+      `SELECT INDEX_NAME
+       FROM information_schema.STATISTICS
+       WHERE TABLE_SCHEMA = DATABASE()
+         AND TABLE_NAME = ?
+         AND INDEX_NAME = ?`,
+      [table, indexName],
+    )) as Array<{ INDEX_NAME: string }>;
+    if (!rows.length) {
+      const cols = columns.map((col) => `\`${col}\``).join(', ');
+      await queryRunner.query(
+        `ALTER TABLE \`${table}\` ADD UNIQUE INDEX \`${indexName}\` (${cols})`,
+      );
+    }
   }
 
   private async scalarCount(queryRunner: QueryRunner, sql: string): Promise<number> {
