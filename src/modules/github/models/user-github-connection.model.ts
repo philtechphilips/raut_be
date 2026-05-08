@@ -8,11 +8,11 @@ import {
 
 @Entity({ name: 'user_github_connections' })
 export class UserGithubConnection {
-  @PrimaryGeneratedColumn({ type: 'int', unsigned: true })
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-  @Column({ type: 'int', unsigned: true, unique: true })
-  userId: number;
+  @Column({ type: 'varchar', length: 36, unique: true })
+  userId: string;
 
   @Column({ type: 'varchar', length: 32 })
   githubUserId: string;

@@ -19,7 +19,10 @@ import { GithubModule } from './modules/github/github.module';
         password: process.env.DB_PASSWORD || '',
         database: process.env.DB_NAME || 'routiq_db',
         autoLoadEntities: true,
-        synchronize: true,
+        synchronize: false,
+        migrationsRun: true,
+        migrations: [__dirname + '/migrations/*{.ts,.js}'],
+        migrationsTableName: 'typeorm_migrations',
         logging: false,
         extra: {
           connectionLimit: 5,

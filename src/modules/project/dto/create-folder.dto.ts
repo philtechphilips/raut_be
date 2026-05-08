@@ -1,8 +1,8 @@
-import { IsInt, IsString, MinLength } from 'class-validator';
+import { IsString, IsUUID, MinLength } from 'class-validator';
 
 export class CreateFolderDto {
-  @IsInt()
-  projectId!: number;
+  @IsUUID()
+  projectId!: string;
 
   @IsString()
   @MinLength(1, { message: 'Folder name is required' })

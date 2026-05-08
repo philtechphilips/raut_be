@@ -13,7 +13,7 @@ export class RequestHistoryService {
     private readonly repo: Repository<UserRequestHistory>,
   ) {}
 
-  async listEntries(userId: number): Promise<Record<string, unknown>[]> {
+  async listEntries(userId: string): Promise<Record<string, unknown>[]> {
     const rows = await this.repo.find({
       where: { userId },
       order: { at: 'DESC' },
@@ -26,7 +26,7 @@ export class RequestHistoryService {
     }));
   }
 
-  async append(userId: number, dto: AppendRequestHistoryDto): Promise<void> {
+  async append(userId: string, dto: AppendRequestHistoryDto): Promise<void> {
     const payload = { ...dto } as unknown as Record<string, unknown>;
     await this.repo.save({
       id: dto.id,
@@ -37,11 +37,11 @@ export class RequestHistoryService {
     await this.trimToLimit(userId);
   }
 
-  async clear(userId: number): Promise<void> {
+  async clear(userId: string): Promise<void> {
     await this.repo.delete({ userId });
   }
 
-  private async trimToLimit(userId: number): Promise<void> {
+  private async trimToLimit(userId: string): Promise<void> {
     const total = await this.repo.count({ where: { userId } });
     if (total <= MAX_ENTRIES) return;
     const toRemove = total - MAX_ENTRIES;

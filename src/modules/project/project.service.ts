@@ -58,7 +58,7 @@ export class ProjectService {
     return p.replace(/\/+$/, '');
   }
 
-  async sync(userId: number, dto: SyncProjectDto) {
+  async sync(userId: string, dto: SyncProjectDto) {
     let project = await this.projectRepository.findOne({
       where: { name: dto.name, userId },
     });
@@ -118,7 +118,7 @@ export class ProjectService {
     const tripleKey = (method: string, path: string, category: string) =>
       `${normMethod(method)}\t${path}\t${normCat(category)}`;
 
-    const consumedIds = new Set<number>();
+    const consumedIds = new Set<string>();
 
     const pickMatchingEndpoint = (
       ep: SyncEndpointDto,
@@ -256,27 +256,27 @@ export class ProjectService {
     };
   }
 
-  async getMyProjects(userId: number) {
+  async getMyProjects(userId: string) {
     const projects = await this.projectRepository.find({
       where: { userId },
       relations: { endpoints: true },
     });
     projects.sort(
-      (a, b) =>
-        (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.id - b.id,
+        (a, b) =>
+          (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.id.localeCompare(b.id),
     );
     for (const p of projects) {
       if (p.endpoints?.length) {
         p.endpoints.sort(
           (a, b) =>
-            (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.id - b.id,
+            (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.id.localeCompare(b.id),
         );
       }
     }
     return { success: true, projects };
   }
 
-  async updateEndpoint(userId: number, id: number, dto: UpdateEndpointDto) {
+  async updateEndpoint(userId: string, id: string, dto: UpdateEndpointDto) {
     const endpoint = await this.endpointRepository.findOne({
       where: { id, project: { userId } },
       relations: { project: true },
@@ -305,7 +305,7 @@ export class ProjectService {
     return { success: true, message: 'Endpoint updated', endpoint };
   }
 
-  async renameFolder(userId: number, dto: RenameFolderDto) {
+  async renameFolder(userId: string, dto: RenameFolderDto) {
     const project = await this.projectRepository.findOne({
       where: { id: dto.projectId, userId },
     });
@@ -338,7 +338,7 @@ export class ProjectService {
     return { success: true, message: 'Folder renamed successfully' };
   }
 
-  async create(userId: number, dto: CreateProjectDto) {
+  async create(userId: string, dto: CreateProjectDto) {
     const maxRow = await this.projectRepository
       .createQueryBuilder('p')
       .select('MAX(p.sortOrder)', 'max')
@@ -376,7 +376,7 @@ export class ProjectService {
     return keys;
   }
 
-  async createFolder(userId: number, dto: CreateFolderDto) {
+  async createFolder(userId: string, dto: CreateFolderDto) {
     const project = await this.projectRepository.findOne({
       where: { id: dto.projectId, userId },
       relations: { endpoints: true },
@@ -413,7 +413,7 @@ export class ProjectService {
     return { success: true, message: 'Folder created' };
   }
 
-  async createEndpoint(userId: number, dto: CreateEndpointDto) {
+  async createEndpoint(userId: string, dto: CreateEndpointDto) {
     const project = await this.projectRepository.findOne({
       where: { id: dto.projectId, userId },
       relations: { endpoints: true },
@@ -464,7 +464,7 @@ export class ProjectService {
     return { success: true, endpoint: saved };
   }
 
-  async update(userId: number, dto: UpdateProjectDto) {
+  async update(userId: string, dto: UpdateProjectDto) {
     const project = await this.projectRepository.findOne({
       where: { id: dto.id, userId },
     });
@@ -513,7 +513,7 @@ export class ProjectService {
     };
   }
 
-  async delete(userId: number, id: number) {
+  async delete(userId: string, id: string) {
     const project = await this.projectRepository.findOne({
       where: { id, userId },
     });
@@ -527,7 +527,7 @@ export class ProjectService {
     return { success: true, message: 'Collection deleted successfully' };
   }
 
-  async deleteFolder(userId: number, dto: DeleteFolderDto) {
+  async deleteFolder(userId: string, dto: DeleteFolderDto) {
     const project = await this.projectRepository.findOne({
       where: { id: dto.projectId, userId },
     });
@@ -559,7 +559,7 @@ export class ProjectService {
     return { success: true, message: 'Folder deleted successfully' };
   }
 
-  async deleteEndpoint(userId: number, id: number) {
+  async deleteEndpoint(userId: string, id: string) {
     const endpoint = await this.endpointRepository.findOne({
       where: { id, project: { userId } },
       relations: { project: true },
@@ -574,7 +574,7 @@ export class ProjectService {
     return { success: true, message: 'Endpoint deleted' };
   }
 
-  async reorderProjects(userId: number, dto: ReorderProjectsDto) {
+  async reorderProjects(userId: string, dto: ReorderProjectsDto) {
     const projects = await this.projectRepository.find({ where: { userId } });
     const idSet = new Set(projects.map((p) => p.id));
     if (dto.orderedProjectIds.length !== idSet.size) {
@@ -595,7 +595,7 @@ export class ProjectService {
     return { success: true };
   }
 
-  async reorderFolders(userId: number, dto: ReorderFoldersDto) {
+  async reorderFolders(userId: string, dto: ReorderFoldersDto) {
     const project = await this.projectRepository.findOne({
       where: { id: dto.projectId, userId },
       relations: { endpoints: true },
@@ -631,7 +631,7 @@ export class ProjectService {
     return { success: true };
   }
 
-  async reorderEndpoints(userId: number, dto: ReorderEndpointsDto) {
+  async reorderEndpoints(userId: string, dto: ReorderEndpointsDto) {
     const project = await this.projectRepository.findOne({
       where: { id: dto.projectId, userId },
       relations: { endpoints: true },
@@ -662,7 +662,7 @@ export class ProjectService {
     return { success: true };
   }
 
-  async getPublishedDocsSnapshot(projectId: number) {
+  async getPublishedDocsSnapshot(projectId: string) {
     const project = await this.projectRepository.findOne({
       where: { id: projectId },
       relations: { endpoints: true },
@@ -674,7 +674,7 @@ export class ProjectService {
   }
 
   /** Same payload as public docs, but allowed for the owner even when docs are not published yet (workspace preview). */
-  async getWorkspaceDocsSnapshot(userId: number, projectId: number) {
+  async getWorkspaceDocsSnapshot(userId: string, projectId: string) {
     const project = await this.projectRepository.findOne({
       where: { id: projectId, userId },
       relations: { endpoints: true },
@@ -688,7 +688,7 @@ export class ProjectService {
   private buildPublishedDocsCollection(project: Project) {
     const endpoints = [...(project.endpoints ?? [])].sort(
       (a, b) =>
-        (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.id - b.id,
+        (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.id.localeCompare(b.id),
     );
 
     const byCategory = new Map<string, Endpoint[]>();

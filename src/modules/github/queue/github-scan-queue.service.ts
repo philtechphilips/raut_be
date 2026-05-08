@@ -29,7 +29,7 @@ export class GithubScanQueueService implements OnModuleDestroy {
     await this.queue.close();
   }
 
-  async enqueueScan(userId: number, dto: GithubScanDto) {
+  async enqueueScan(userId: string, dto: GithubScanDto) {
     const jobId = randomUUID();
     await this.queue.add('import', { userId, dto }, { jobId, attempts: 1 });
     return {
@@ -40,7 +40,7 @@ export class GithubScanQueueService implements OnModuleDestroy {
     };
   }
 
-  async getJobForUser(userId: number, jobId: string) {
+  async getJobForUser(userId: string, jobId: string) {
     const job = await this.queue.getJob(jobId);
     if (!job) throw new NotFoundException('Scan job not found.');
     if (job.data.userId !== userId) throw new NotFoundException('Scan job not found.');

@@ -1,14 +1,14 @@
-import { ArrayMinSize, IsArray, IsInt, IsString } from 'class-validator';
+import { ArrayMinSize, IsArray, IsString, IsUUID } from 'class-validator';
 
 export class ReorderEndpointsDto {
-  @IsInt()
-  projectId!: number;
+  @IsUUID()
+  projectId!: string;
 
   @IsString()
   category!: string;
 
   @IsArray()
   @ArrayMinSize(1)
-  @IsInt({ each: true })
-  orderedEndpointIds!: number[];
+  @IsUUID('all', { each: true })
+  orderedEndpointIds!: string[];
 }

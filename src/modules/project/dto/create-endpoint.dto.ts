@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsIn, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
 
 const ALLOWED_METHODS = [
   'GET',
@@ -12,8 +12,8 @@ const ALLOWED_METHODS = [
 ] as const;
 
 export class CreateEndpointDto {
-  @IsInt()
-  projectId!: number;
+  @IsUUID()
+  projectId!: string;
 
   @Transform(({ value }) =>
     typeof value === 'string' ? value.trim().toUpperCase() : value,

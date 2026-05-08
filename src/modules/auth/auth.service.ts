@@ -228,7 +228,7 @@ export class AuthService {
     };
   }
 
-  async updateProfile(userId: number, name?: string) {
+  async updateProfile(userId: string, name?: string) {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
       throw new BadRequestException('User not found');

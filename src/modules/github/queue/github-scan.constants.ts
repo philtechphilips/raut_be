@@ -6,6 +6,6 @@ export const GITHUB_SCAN_QUEUE_NAME = 'github-scan';
 export const GITHUB_SCAN_BULL_QUEUE = Symbol('GITHUB_SCAN_BULL_QUEUE');
 
 export type GithubScanJobPayload = {
-  userId: number;
+  userId: string;
   dto: GithubScanDto;
 };

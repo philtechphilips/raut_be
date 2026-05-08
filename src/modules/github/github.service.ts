@@ -50,13 +50,13 @@ export class GithubService {
     return { clientId, clientSecret };
   }
 
-  private async getTokenForUser(userId: number): Promise<string> {
+  private async getTokenForUser(userId: string): Promise<string> {
     const row = await this.connections.findOne({ where: { userId } });
     if (!row) throw new BadRequestException('Connect GitHub first.');
     return decryptGithubToken(row.accessTokenEnc);
   }
 
-  async getStatus(userId: number) {
+  async getStatus(userId: string) {
     const row = await this.connections.findOne({ where: { userId } });
     return {
       connected: Boolean(row),
@@ -64,7 +64,7 @@ export class GithubService {
     };
   }
 
-  buildAuthorizeUrl(userId: number): string {
+  buildAuthorizeUrl(userId: string): string {
     const { clientId } = this.requireGithubOAuthConfig();
     const state = signGithubOAuthState(userId);
     const redirectUri =
@@ -79,7 +79,7 @@ export class GithubService {
     return u.toString();
   }
 
-  async exchangeCodeAndSave(userId: number, code: string): Promise<void> {
+  async exchangeCodeAndSave(userId: string, code: string): Promise<void> {
     const { clientId, clientSecret } = this.requireGithubOAuthConfig();
     const redirectUri =
       process.env.GITHUB_OAUTH_CALLBACK_URL ||
@@ -174,7 +174,7 @@ export class GithubService {
     }
   }
 
-  async disconnect(userId: number): Promise<void> {
+  async disconnect(userId: string): Promise<void> {
     await this.connections.delete({ userId });
   }
 
@@ -193,7 +193,7 @@ export class GithubService {
     return (await res.json()) as T;
   }
 
-  async listRepos(userId: number) {
+  async listRepos(userId: string) {
     const token = await this.getTokenForUser(userId);
     const items = await this.githubApiJson<
       { full_name: string; default_branch: string; private: boolean; updated_at: string }[]
@@ -246,7 +246,7 @@ export class GithubService {
     endpoint.confidence = 'high';
   }
 
-  async executeScanRepository(userId: number, dto: GithubScanDto) {
+  async executeScanRepository(userId: string, dto: GithubScanDto) {
     const startedAt = Date.now();
     const repoLabel = `${dto.owner}/${dto.repo}`;
     this.logger.log(`GitHub document: start userId=${userId} repo=${repoLabel}`);

@@ -8,7 +8,7 @@ function secret(): string {
   );
 }
 
-export function signGithubOAuthState(userId: number): string {
+export function signGithubOAuthState(userId: string): string {
   const payload = JSON.stringify({
     uid: userId,
     exp: Date.now() + 15 * 60 * 1000,
@@ -17,7 +17,7 @@ export function signGithubOAuthState(userId: number): string {
   return Buffer.from(`${payload}::${sig}`).toString('base64url');
 }
 
-export function verifyGithubOAuthState(token: string): number | null {
+export function verifyGithubOAuthState(token: string): string | null {
   try {
     const raw = Buffer.from(token, 'base64url').toString('utf8');
     const sep = raw.lastIndexOf('::');
@@ -28,8 +28,8 @@ export function verifyGithubOAuthState(token: string): number | null {
     const a = Buffer.from(sig, 'utf8');
     const b = Buffer.from(expected, 'utf8');
     if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
-    const parsed = JSON.parse(payload) as { uid?: number; exp?: number };
-    if (typeof parsed.uid !== 'number' || typeof parsed.exp !== 'number') return null;
+    const parsed = JSON.parse(payload) as { uid?: string; exp?: number };
+    if (typeof parsed.uid !== 'string' || typeof parsed.exp !== 'number') return null;
     if (Date.now() > parsed.exp) return null;
     return parsed.uid;
   } catch {

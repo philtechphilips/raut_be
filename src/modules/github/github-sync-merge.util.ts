@@ -1,7 +1,7 @@
 import type { SyncProjectDto } from '../project/dto/sync-project.dto';
 
 export type GithubApiEndpoint = {
-  id: number;
+  id: string;
   method: string;
   path: string;
   category: string;
@@ -27,7 +27,7 @@ function tripleKey(method: string, path: string, category: string) {
 }
 
 /**
- * Attach numeric endpoint ids before sync (same heuristics as CLI) so re-scans update rows.
+ * Attach endpoint ids before sync (same heuristics as CLI) so re-scans update rows.
  */
 export function mergeSyncPayloadWithEndpointIds(
   projects: { name: string; endpoints?: GithubApiEndpoint[] }[],
@@ -37,8 +37,8 @@ export function mergeSyncPayloadWithEndpointIds(
   const apiEps = proj?.endpoints;
   if (!apiEps?.length) return payload;
 
-  const consumed = new Set<number>();
-  const pickId = (ep: SyncProjectDto['endpoints'][number]): number | undefined => {
+  const consumed = new Set<string>();
+  const pickId = (ep: SyncProjectDto['endpoints'][number]): string | undefined => {
     const pool = apiEps.filter((e) => !consumed.has(e.id));
 
     const dtoAnchor = normalizeAnchor(ep.syncAnchor);

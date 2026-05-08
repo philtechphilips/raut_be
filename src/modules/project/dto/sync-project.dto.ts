@@ -1,12 +1,11 @@
 import { Type } from 'class-transformer';
 import {
   IsArray,
-  IsInt,
   IsOptional,
   IsString,
+  IsUUID,
   Matches,
   MaxLength,
-  Min,
   ValidateNested,
 } from 'class-validator';
 
@@ -21,9 +20,8 @@ export class FolderOverviewDto {
 export class SyncEndpointDto {
   /** When set and owned by this project, sync updates this row (survives path/category renames). */
   @IsOptional()
-  @IsInt()
-  @Min(1)
-  id?: number;
+  @IsUUID()
+  id?: string;
 
   @IsString()
   method: string;

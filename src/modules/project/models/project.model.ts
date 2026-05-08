@@ -12,8 +12,8 @@ import { User } from '../../auth/models/user.model';
 
 @Entity({ name: 'projects' })
 export class Project {
-  @PrimaryGeneratedColumn({ type: 'int', unsigned: true })
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Column({ type: 'varchar' })
   name: string;
@@ -48,8 +48,8 @@ export class Project {
   @Column({ type: 'varchar', length: 256, nullable: true })
   apiRoutePrefix: string | null;
 
-  @Column({ type: 'int', unsigned: true })
-  userId: number;
+  @Column({ type: 'varchar', length: 36 })
+  userId: string;
 
   @ManyToOne(() => User, (user) => user.projects, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
@@ -69,11 +69,11 @@ export class Project {
 
 @Entity({ name: 'endpoints' })
 export class Endpoint {
-  @PrimaryGeneratedColumn({ type: 'int', unsigned: true })
-  id: number;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-  @Column({ type: 'int', unsigned: true })
-  projectId: number;
+  @Column({ type: 'varchar', length: 36 })
+  projectId: string;
 
   @Column({ type: 'varchar', length: 10 })
   method: string;

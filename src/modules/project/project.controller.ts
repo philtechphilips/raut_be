@@ -4,7 +4,7 @@ import {
   Delete,
   Get,
   Param,
-  ParseIntPipe,
+  ParseUUIDPipe,
   Patch,
   Post,
   UseGuards,
@@ -45,7 +45,7 @@ export class ProjectController {
   @Get(':projectId/published-docs-snapshot')
   workspaceDocsSnapshot(
     @CurrentUser() user: CurrentUserPayload,
-    @Param('projectId', ParseIntPipe) projectId: number,
+    @Param('projectId', new ParseUUIDPipe()) projectId: string,
   ) {
     return this.projectService.getWorkspaceDocsSnapshot(user.id, projectId);
   }
@@ -77,7 +77,7 @@ export class ProjectController {
   @Patch('endpoint/:id')
   updateEndpoint(
     @CurrentUser() user: CurrentUserPayload,
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', new ParseUUIDPipe()) id: string,
     @Body() dto: UpdateEndpointDto,
   ) {
     return this.projectService.updateEndpoint(user.id, id, dto);
@@ -126,7 +126,7 @@ export class ProjectController {
   @Delete(':id')
   delete(
     @CurrentUser() user: CurrentUserPayload,
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', new ParseUUIDPipe()) id: string,
   ) {
     return this.projectService.delete(user.id, id);
   }
@@ -142,7 +142,7 @@ export class ProjectController {
   @Delete('endpoint/:id')
   deleteEndpoint(
     @CurrentUser() user: CurrentUserPayload,
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', new ParseUUIDPipe()) id: string,
   ) {
     return this.projectService.deleteEndpoint(user.id, id);
   }

@@ -1,8 +1,8 @@
-import { IsInt, IsString } from 'class-validator';
+import { IsString, IsUUID } from 'class-validator';
 
 export class DeleteFolderDto {
-  @IsInt()
-  projectId: number;
+  @IsUUID()
+  projectId: string;
 
   @IsString()
   category: string;

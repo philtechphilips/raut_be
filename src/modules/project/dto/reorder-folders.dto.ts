@@ -1,8 +1,8 @@
-import { ArrayMinSize, IsArray, IsInt, IsString } from 'class-validator';
+import { ArrayMinSize, IsArray, IsString, IsUUID } from 'class-validator';
 
 export class ReorderFoldersDto {
-  @IsInt()
-  projectId!: number;
+  @IsUUID()
+  projectId!: string;
 
   @IsArray()
   @ArrayMinSize(1)

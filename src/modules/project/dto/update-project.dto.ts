@@ -2,16 +2,16 @@ import { Transform, Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
-  IsInt,
   IsOptional,
   IsString,
+  IsUUID,
   ValidateNested,
 } from 'class-validator';
 import { FolderOverviewDto } from './sync-project.dto';
 
 export class UpdateProjectDto {
-  @IsInt()
-  id: number;
+  @IsUUID()
+  id: string;
 
   @IsOptional()
   @IsString()

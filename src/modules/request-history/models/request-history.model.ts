@@ -7,8 +7,8 @@ export class UserRequestHistory {
   @PrimaryColumn({ type: 'varchar', length: 80 })
   id: string;
 
-  @Column({ type: 'int', unsigned: true })
-  userId: number;
+  @Column({ type: 'varchar', length: 36 })
+  userId: string;
 
   /** Epoch ms from the client when the request finished (for ordering). */
   @Column({ type: 'bigint', unsigned: true })
