@@ -73,7 +73,8 @@ GitHub OAuth / GitHub import:
 GitHub App (Vercel-style: **one** webhook URL for every customer):
 
 - `GITHUB_APP_ID` — App ID from GitHub App settings
-- `GITHUB_APP_PRIVATE_KEY` — PEM private key (use `\n` for newlines in `.env`, or base64-encoded PEM)
+- `GITHUB_APP_PRIVATE_KEY_PATH` — **recommended**: absolute or cwd-relative path to the `.pem` file GitHub gave you (e.g. `secrets/github-app.pem`). The `secrets/` folder is gitignored except `.gitkeep`; never commit PEM files.
+- `GITHUB_APP_PRIVATE_KEY` — alternative to path: inline PEM (single `.env` line with `\n` escapes) or base64 of the full PEM file
 - `GITHUB_APP_SLUG` — URL slug (`github.com/apps/<slug>`) for the “Install” link in the dashboard
 - `GITHUB_APP_WEBHOOK_SECRET` — Webhook secret from the GitHub App (used for `POST /api/github/app/webhook`; falls back to `GITHUB_WEBHOOK_SECRET` if unset)
 
