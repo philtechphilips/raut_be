@@ -2,6 +2,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 
 type Col = { COLUMN_TYPE: string };
 type Fk = { CONSTRAINT_NAME: string; TABLE_NAME: string };
+type ColExtra = { COLUMN_TYPE: string; EXTRA: string };
 
 export class IntIdsToUuid1715140000000 implements MigrationInterface {
   name = 'IntIdsToUuid1715140000000';
@@ -196,6 +197,7 @@ export class IntIdsToUuid1715140000000 implements MigrationInterface {
   }
 
   private async dropPrimaryKey(queryRunner: QueryRunner, table: string): Promise<void> {
+    await this.stripAutoIncrementIfPresent(queryRunner, table, 'id');
     const rows = (await queryRunner.query(
       `SELECT CONSTRAINT_NAME
        FROM information_schema.TABLE_CONSTRAINTS
@@ -207,6 +209,27 @@ export class IntIdsToUuid1715140000000 implements MigrationInterface {
     if (rows.length) {
       await queryRunner.query(`ALTER TABLE \`${table}\` DROP PRIMARY KEY`);
     }
+  }
+
+  private async stripAutoIncrementIfPresent(
+    queryRunner: QueryRunner,
+    table: string,
+    column: string,
+  ): Promise<void> {
+    const rows = (await queryRunner.query(
+      `SELECT COLUMN_TYPE, EXTRA
+       FROM information_schema.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE()
+         AND TABLE_NAME = ?
+         AND COLUMN_NAME = ?`,
+      [table, column],
+    )) as ColExtra[];
+    const info = rows[0];
+    if (!info) return;
+    if (!info.EXTRA?.toLowerCase().includes('auto_increment')) return;
+    await queryRunner.query(
+      `ALTER TABLE \`${table}\` MODIFY \`${column}\` ${info.COLUMN_TYPE} NOT NULL`,
+    );
   }
 
   private async addColumnIfMissing(
