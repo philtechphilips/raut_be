@@ -29,9 +29,23 @@ export class GithubScanQueueService implements OnModuleDestroy {
     await this.queue.close();
   }
 
-  async enqueueScan(userId: string, dto: GithubScanDto) {
+  async enqueueScan(
+    userId: string,
+    dto: GithubScanDto,
+    opts?: { githubInstallationId?: string },
+  ) {
     const jobId = randomUUID();
-    await this.queue.add('import', { userId, dto }, { jobId, attempts: 1 });
+    await this.queue.add(
+      'import',
+      {
+        userId,
+        dto,
+        ...(opts?.githubInstallationId
+          ? { githubInstallationId: opts.githubInstallationId }
+          : {}),
+      },
+      { jobId, attempts: 1 },
+    );
     return {
       jobId,
       status: 'queued' as const,

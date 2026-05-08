@@ -8,4 +8,6 @@ export const GITHUB_SCAN_BULL_QUEUE = Symbol('GITHUB_SCAN_BULL_QUEUE');
 export type GithubScanJobPayload = {
   userId: string;
   dto: GithubScanDto;
+  /** When set, clone/API use GitHub App installation token instead of user OAuth. */
+  githubInstallationId?: string;
 };

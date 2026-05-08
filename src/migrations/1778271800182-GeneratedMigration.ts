@@ -1,0 +1,122 @@
+import { MigrationInterface, QueryRunner } from "typeorm";
+
+export class GeneratedMigration1778271800182 implements MigrationInterface {
+    name = 'GeneratedMigration1778271800182'
+
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`ALTER TABLE \`projects\` DROP FOREIGN KEY \`FK_projects_userId_users_id\``);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` DROP FOREIGN KEY \`FK_endpoints_projectId_projects_id\``);
+        await queryRunner.query(`ALTER TABLE \`github_repo_subscriptions\` DROP FOREIGN KEY \`FK_github_repo_subscriptions_userId\``);
+        await queryRunner.query(`DROP INDEX \`IDX_projects_userId\` ON \`projects\``);
+        await queryRunner.query(`DROP INDEX \`IDX_endpoints_projectId\` ON \`endpoints\``);
+        await queryRunner.query(`DROP INDEX \`IDX_users_email\` ON \`users\``);
+        await queryRunner.query(`DROP INDEX \`IDX_user_request_history_userId_at\` ON \`user_request_history\``);
+        await queryRunner.query(`DROP INDEX \`IDX_user_github_connections_userId\` ON \`user_github_connections\``);
+        await queryRunner.query(`DROP INDEX \`IDX_github_repo_subscriptions_userId\` ON \`github_repo_subscriptions\``);
+        await queryRunner.query(`ALTER TABLE \`projects\` DROP PRIMARY KEY`);
+        await queryRunner.query(`ALTER TABLE \`projects\` DROP COLUMN \`id\``);
+        await queryRunner.query(`ALTER TABLE \`projects\` ADD \`id\` varchar(36) NOT NULL PRIMARY KEY`);
+        await queryRunner.query(`ALTER TABLE \`projects\` CHANGE \`description\` \`description\` text NULL`);
+        await queryRunner.query(`ALTER TABLE \`projects\` DROP COLUMN \`folderOverviews\``);
+        await queryRunner.query(`ALTER TABLE \`projects\` ADD \`folderOverviews\` json NULL`);
+        await queryRunner.query(`ALTER TABLE \`projects\` DROP COLUMN \`folderOrder\``);
+        await queryRunner.query(`ALTER TABLE \`projects\` ADD \`folderOrder\` json NULL`);
+        await queryRunner.query(`ALTER TABLE \`projects\` CHANGE \`docsBaseUrl\` \`docsBaseUrl\` varchar(512) NULL`);
+        await queryRunner.query(`ALTER TABLE \`projects\` CHANGE \`apiRoutePrefix\` \`apiRoutePrefix\` varchar(256) NULL`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` DROP PRIMARY KEY`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` DROP COLUMN \`id\``);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` ADD \`id\` varchar(36) NOT NULL PRIMARY KEY`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` CHANGE \`syncAnchor\` \`syncAnchor\` varchar(512) NULL`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` CHANGE \`handlerFingerprint\` \`handlerFingerprint\` varchar(64) NULL`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` CHANGE \`description\` \`description\` text NULL`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` CHANGE \`body\` \`body\` text NULL`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` DROP COLUMN \`scenarios\``);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` ADD \`scenarios\` json NULL`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` DROP COLUMN \`params\``);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` ADD \`params\` json NULL`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` DROP COLUMN \`query\``);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` ADD \`query\` json NULL`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` DROP COLUMN \`headers\``);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` ADD \`headers\` json NULL`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` CHANGE \`responseSummary\` \`responseSummary\` text NULL`);
+        await queryRunner.query(`ALTER TABLE \`users\` DROP PRIMARY KEY`);
+        await queryRunner.query(`ALTER TABLE \`users\` DROP COLUMN \`id\``);
+        await queryRunner.query(`ALTER TABLE \`users\` ADD \`id\` varchar(36) NOT NULL PRIMARY KEY`);
+        await queryRunner.query(`ALTER TABLE \`users\` ADD UNIQUE INDEX \`IDX_97672ac88f789774dd47f7c8be\` (\`email\`)`);
+        await queryRunner.query(`ALTER TABLE \`users\` CHANGE \`name\` \`name\` varchar(128) NULL`);
+        await queryRunner.query(`ALTER TABLE \`users\` CHANGE \`emailVerifiedAt\` \`emailVerifiedAt\` datetime NULL`);
+        await queryRunner.query(`ALTER TABLE \`users\` CHANGE \`emailVerificationToken\` \`emailVerificationToken\` varchar(64) NULL`);
+        await queryRunner.query(`ALTER TABLE \`users\` CHANGE \`emailVerificationExpiresAt\` \`emailVerificationExpiresAt\` datetime NULL`);
+        await queryRunner.query(`ALTER TABLE \`users\` CHANGE \`passwordResetToken\` \`passwordResetToken\` varchar(64) NULL`);
+        await queryRunner.query(`ALTER TABLE \`users\` CHANGE \`passwordResetExpiresAt\` \`passwordResetExpiresAt\` datetime NULL`);
+        await queryRunner.query(`ALTER TABLE \`user_github_connections\` DROP PRIMARY KEY`);
+        await queryRunner.query(`ALTER TABLE \`user_github_connections\` DROP COLUMN \`id\``);
+        await queryRunner.query(`ALTER TABLE \`user_github_connections\` ADD \`id\` varchar(36) NOT NULL PRIMARY KEY`);
+        await queryRunner.query(`ALTER TABLE \`user_github_connections\` ADD UNIQUE INDEX \`IDX_f017d6fff088c88a2b23980136\` (\`userId\`)`);
+        await queryRunner.query(`ALTER TABLE \`github_repo_subscriptions\` CHANGE \`branch\` \`branch\` varchar(255) NULL`);
+        await queryRunner.query(`ALTER TABLE \`github_repo_subscriptions\` CHANGE \`collectionName\` \`collectionName\` varchar(200) NULL`);
+        await queryRunner.query(`CREATE INDEX \`IDX_35bcb042af80db3dcefa78a83a\` ON \`user_request_history\` (\`userId\`, \`at\`)`);
+        await queryRunner.query(`ALTER TABLE \`projects\` ADD CONSTRAINT \`FK_361a53ae58ef7034adc3c06f09f\` FOREIGN KEY (\`userId\`) REFERENCES \`users\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` ADD CONSTRAINT \`FK_358ea111fcf6068d2c8c70ab90b\` FOREIGN KEY (\`projectId\`) REFERENCES \`projects\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`github_repo_subscriptions\` ADD CONSTRAINT \`FK_955256db4eac7347ace7b890267\` FOREIGN KEY (\`userId\`) REFERENCES \`users\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+    }
+
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`ALTER TABLE \`github_repo_subscriptions\` DROP FOREIGN KEY \`FK_955256db4eac7347ace7b890267\``);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` DROP FOREIGN KEY \`FK_358ea111fcf6068d2c8c70ab90b\``);
+        await queryRunner.query(`ALTER TABLE \`projects\` DROP FOREIGN KEY \`FK_361a53ae58ef7034adc3c06f09f\``);
+        await queryRunner.query(`DROP INDEX \`IDX_35bcb042af80db3dcefa78a83a\` ON \`user_request_history\``);
+        await queryRunner.query(`ALTER TABLE \`github_repo_subscriptions\` CHANGE \`collectionName\` \`collectionName\` varchar(200) NULL DEFAULT 'NULL'`);
+        await queryRunner.query(`ALTER TABLE \`github_repo_subscriptions\` CHANGE \`branch\` \`branch\` varchar(255) NULL DEFAULT 'NULL'`);
+        await queryRunner.query(`ALTER TABLE \`user_github_connections\` DROP INDEX \`IDX_f017d6fff088c88a2b23980136\``);
+        await queryRunner.query(`ALTER TABLE \`user_github_connections\` DROP COLUMN \`id\``);
+        await queryRunner.query(`ALTER TABLE \`user_github_connections\` ADD \`id\` char(36) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`user_github_connections\` ADD PRIMARY KEY (\`id\`)`);
+        await queryRunner.query(`ALTER TABLE \`users\` CHANGE \`passwordResetExpiresAt\` \`passwordResetExpiresAt\` datetime NULL DEFAULT 'NULL'`);
+        await queryRunner.query(`ALTER TABLE \`users\` CHANGE \`passwordResetToken\` \`passwordResetToken\` varchar(64) NULL DEFAULT 'NULL'`);
+        await queryRunner.query(`ALTER TABLE \`users\` CHANGE \`emailVerificationExpiresAt\` \`emailVerificationExpiresAt\` datetime NULL DEFAULT 'NULL'`);
+        await queryRunner.query(`ALTER TABLE \`users\` CHANGE \`emailVerificationToken\` \`emailVerificationToken\` varchar(64) NULL DEFAULT 'NULL'`);
+        await queryRunner.query(`ALTER TABLE \`users\` CHANGE \`emailVerifiedAt\` \`emailVerifiedAt\` datetime NULL DEFAULT 'NULL'`);
+        await queryRunner.query(`ALTER TABLE \`users\` CHANGE \`name\` \`name\` varchar(128) NULL DEFAULT 'NULL'`);
+        await queryRunner.query(`ALTER TABLE \`users\` DROP INDEX \`IDX_97672ac88f789774dd47f7c8be\``);
+        await queryRunner.query(`ALTER TABLE \`users\` DROP COLUMN \`id\``);
+        await queryRunner.query(`ALTER TABLE \`users\` ADD \`id\` char(36) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`users\` ADD PRIMARY KEY (\`id\`)`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` CHANGE \`responseSummary\` \`responseSummary\` text NULL DEFAULT 'NULL'`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` DROP COLUMN \`headers\``);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` ADD \`headers\` longtext COLLATE "utf8mb4_bin" NULL DEFAULT 'NULL'`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` DROP COLUMN \`query\``);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` ADD \`query\` longtext COLLATE "utf8mb4_bin" NULL DEFAULT 'NULL'`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` DROP COLUMN \`params\``);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` ADD \`params\` longtext COLLATE "utf8mb4_bin" NULL DEFAULT 'NULL'`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` DROP COLUMN \`scenarios\``);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` ADD \`scenarios\` longtext COLLATE "utf8mb4_bin" NULL DEFAULT 'NULL'`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` CHANGE \`body\` \`body\` text NULL DEFAULT 'NULL'`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` CHANGE \`description\` \`description\` text NULL DEFAULT 'NULL'`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` CHANGE \`handlerFingerprint\` \`handlerFingerprint\` varchar(64) NULL DEFAULT 'NULL'`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` CHANGE \`syncAnchor\` \`syncAnchor\` varchar(512) NULL DEFAULT 'NULL'`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` DROP COLUMN \`id\``);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` ADD \`id\` char(36) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` ADD PRIMARY KEY (\`id\`)`);
+        await queryRunner.query(`ALTER TABLE \`projects\` CHANGE \`apiRoutePrefix\` \`apiRoutePrefix\` varchar(256) NULL DEFAULT 'NULL'`);
+        await queryRunner.query(`ALTER TABLE \`projects\` CHANGE \`docsBaseUrl\` \`docsBaseUrl\` varchar(512) NULL DEFAULT 'NULL'`);
+        await queryRunner.query(`ALTER TABLE \`projects\` DROP COLUMN \`folderOrder\``);
+        await queryRunner.query(`ALTER TABLE \`projects\` ADD \`folderOrder\` longtext COLLATE "utf8mb4_bin" NULL DEFAULT 'NULL'`);
+        await queryRunner.query(`ALTER TABLE \`projects\` DROP COLUMN \`folderOverviews\``);
+        await queryRunner.query(`ALTER TABLE \`projects\` ADD \`folderOverviews\` longtext COLLATE "utf8mb4_bin" NULL DEFAULT 'NULL'`);
+        await queryRunner.query(`ALTER TABLE \`projects\` CHANGE \`description\` \`description\` text NULL DEFAULT 'NULL'`);
+        await queryRunner.query(`ALTER TABLE \`projects\` DROP COLUMN \`id\``);
+        await queryRunner.query(`ALTER TABLE \`projects\` ADD \`id\` char(36) NOT NULL`);
+        await queryRunner.query(`ALTER TABLE \`projects\` ADD PRIMARY KEY (\`id\`)`);
+        await queryRunner.query(`CREATE INDEX \`IDX_github_repo_subscriptions_userId\` ON \`github_repo_subscriptions\` (\`userId\`)`);
+        await queryRunner.query(`CREATE UNIQUE INDEX \`IDX_user_github_connections_userId\` ON \`user_github_connections\` (\`userId\`)`);
+        await queryRunner.query(`CREATE INDEX \`IDX_user_request_history_userId_at\` ON \`user_request_history\` (\`userId\`, \`at\`)`);
+        await queryRunner.query(`CREATE UNIQUE INDEX \`IDX_users_email\` ON \`users\` (\`email\`)`);
+        await queryRunner.query(`CREATE INDEX \`IDX_endpoints_projectId\` ON \`endpoints\` (\`projectId\`)`);
+        await queryRunner.query(`CREATE INDEX \`IDX_projects_userId\` ON \`projects\` (\`userId\`)`);
+        await queryRunner.query(`ALTER TABLE \`github_repo_subscriptions\` ADD CONSTRAINT \`FK_github_repo_subscriptions_userId\` FOREIGN KEY (\`userId\`) REFERENCES \`users\`(\`id\`) ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`endpoints\` ADD CONSTRAINT \`FK_endpoints_projectId_projects_id\` FOREIGN KEY (\`projectId\`) REFERENCES \`projects\`(\`id\`) ON DELETE CASCADE ON UPDATE RESTRICT`);
+        await queryRunner.query(`ALTER TABLE \`projects\` ADD CONSTRAINT \`FK_projects_userId_users_id\` FOREIGN KEY (\`userId\`) REFERENCES \`users\`(\`id\`) ON DELETE CASCADE ON UPDATE RESTRICT`);
+    }
+
+}

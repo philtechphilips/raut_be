@@ -1,4 +1,12 @@
-import { IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import { Transform } from 'class-transformer';
+import {
+  IsBoolean,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class GithubScanDto {
   @IsString()
@@ -22,4 +30,10 @@ export class GithubScanDto {
   @IsString()
   @MaxLength(200)
   collectionName?: string;
+
+  /** When true, register this repo for push-triggered rescans (GitHub App webhooks). */
+  @IsOptional()
+  @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  syncOnPush?: boolean;
 }

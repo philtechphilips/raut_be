@@ -4,6 +4,7 @@ import { Job, UnrecoverableError, Worker } from 'bullmq';
 import { Repository } from 'typeorm';
 import { User } from '../../auth/models/user.model';
 import { MailService } from '../../mail/mail.service';
+import { GithubAppAuthService } from '../github-app-auth.service';
 import { GithubService } from '../github.service';
 import { GITHUB_SCAN_QUEUE_NAME, type GithubScanJobPayload } from './github-scan.constants';
 import { redisConnectionForBullmq } from './github-scan.redis';
@@ -29,6 +30,7 @@ export class GithubScanWorkerService implements OnModuleInit, OnModuleDestroy {
 
   constructor(
     private readonly github: GithubService,
+    private readonly githubAppAuth: GithubAppAuthService,
     @InjectRepository(User)
     private readonly users: Repository<User>,
     private readonly mail: MailService,
@@ -63,7 +65,7 @@ export class GithubScanWorkerService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async processJob(job: Job<GithubScanJobPayload>) {
-    const { userId, dto } = job.data;
+    const { userId, dto, githubInstallationId } = job.data;
     const repoLabel = `${dto.owner}/${dto.repo}`;
 
     const user = await this.users.findOne({ where: { id: userId } });
@@ -72,7 +74,24 @@ export class GithubScanWorkerService implements OnModuleInit, OnModuleDestroy {
     }
 
     try {
-      const outcome = await this.github.executeScanRepository(userId, dto);
+      let accessToken: string | undefined;
+      if (githubInstallationId) {
+        accessToken =
+          await this.githubAppAuth.createInstallationAccessToken(
+            githubInstallationId,
+          );
+      }
+      const outcome = await this.github.executeScanRepository(userId, dto, {
+        accessToken,
+      });
+      if (dto.syncOnPush) {
+        await this.github.upsertSubscription(userId, {
+          owner: dto.owner,
+          repo: dto.repo,
+          branch: dto.branch,
+          collectionName: dto.collectionName,
+        });
+      }
       const resultPayload = {
         message: outcome.message,
         collectionName: outcome.collectionName,
