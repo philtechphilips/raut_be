@@ -9,7 +9,7 @@ function base64urlJson(obj: unknown): string {
     .replace(/\+/g, '-')
     .replace(/\//g, '_');
 }
-
+    
 /**
  * PEM from disk (`GITHUB_APP_PRIVATE_KEY_PATH`) or env (`GITHUB_APP_PRIVATE_KEY`):
  * quoted single-line with `\n`, or raw base64 of full PEM file.
