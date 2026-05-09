@@ -37,6 +37,9 @@ export class User {
   @Column({ type: 'datetime', nullable: true })
   passwordResetExpiresAt: Date | null;
 
+  @Column({ type: 'varchar', length: 32, default: 'user', nullable: true })
+  role: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 
