@@ -8,6 +8,7 @@ import { RequestHistoryModule } from './modules/request-history/request-history.
 import { GithubModule } from './modules/github/github.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { LocalRequestModule } from './modules/local-request/local-request.module';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -39,5 +40,6 @@ import { LocalRequestModule } from './modules/local-request/local-request.module
     AdminModule,
     LocalRequestModule,
   ],
+  controllers: [AppController],
 })
 export class AppModule {}
