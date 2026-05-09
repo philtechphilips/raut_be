@@ -24,9 +24,10 @@ jobs:
           output: trivy-table.txt
           severity: CRITICAL,HIGH
           ignore-unfixed: true
-          exit-code: '0'
+          exit-code: '1'
 
       - name: Show table in log + Summary
+        if: always()
         run: |
           echo "========== Trivy (CRITICAL/HIGH) =========="
           cat trivy-table.txt
