@@ -22,7 +22,7 @@ import { LocalRequestModule } from './modules/local-request/local-request.module
         database: process.env.DB_NAME || 'routiq_db',
         autoLoadEntities: true,
         synchronize: false,
-        migrationsRun: true,
+        migrationsRun: false,
         migrations: [__dirname + '/migrations/*{.ts,.js}'],
         migrationsTableName: 'typeorm_migrations',
         logging: false,
