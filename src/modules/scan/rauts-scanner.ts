@@ -6,7 +6,16 @@ import type { Endpoint, FieldInfo, HttpMethod, IProjectScanner, ProjectScanResul
 import { detectApiMetadata, prefixEndpointPath } from './detect-api-metadata';
 
 /** Framework labels produced by {@link RautsScanner} detection that we allow for GitHub import. */
-export const RAUTS_SUPPORTED_FRAMEWORKS = new Set(['NestJS', 'Express', 'Laravel']);
+export const RAUTS_SUPPORTED_FRAMEWORKS = new Set([
+  'NestJS',
+  'Express',
+  'Laravel',
+  'Fastify',
+  'Koa',
+  'Hono',
+  'Elysia',
+  'AdonisJS',
+]);
 
 /** In-process API scanner (same logic as routiq-cli; ships with the backend for GitHub / cloud scans). */
 export class RautsScanner implements IProjectScanner {
@@ -64,6 +73,24 @@ export class RautsScanner implements IProjectScanner {
     };
   }
 
+  /** Frameworks whose route registration commonly matches `.verb('/path', handler)` on an instance. */
+  private static readonly EXPRESS_STYLE_FRAMEWORKS = new Set([
+    'Express',
+    'Fastify',
+    'Koa',
+    'Hono',
+    'Elysia',
+    'AdonisJS',
+  ]);
+
+  private usesExpressStyleRoutes(framework: string): boolean {
+    return RautsScanner.EXPRESS_STYLE_FRAMEWORKS.has(framework);
+  }
+
+  /**
+   * Detect runtime from package.json (order matters: Nest before Express-style stacks).
+   * TS/JS parsing still applies Nest decorators + generic HTTP verb calls for all unknown stacks.
+   */
   private detectFramework(allFiles: string[], directory: string): string {
     const packageJsonPath = path.join(directory, 'package.json');
     const composerJsonPath = path.join(directory, 'composer.json');
@@ -74,9 +101,20 @@ export class RautsScanner implements IProjectScanner {
         const pkg = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8')) as {
           dependencies?: Record<string, string>;
           devDependencies?: Record<string, string>;
+          peerDependencies?: Record<string, string>;
         };
-        if (pkg.dependencies?.['@nestjs/core']) return 'NestJS';
-        if (pkg.dependencies?.express || pkg.devDependencies?.express) return 'Express';
+        const deps = {
+          ...pkg.dependencies,
+          ...pkg.devDependencies,
+          ...pkg.peerDependencies,
+        };
+        if (deps['@nestjs/core']) return 'NestJS';
+        if (deps.fastify) return 'Fastify';
+        if (deps['@adonisjs/core']) return 'AdonisJS';
+        if (deps.elysia) return 'Elysia';
+        if (deps.hono) return 'Hono';
+        if (deps.koa) return 'Koa';
+        if (deps.express) return 'Express';
       } catch {
         /* skip */
       }
@@ -91,6 +129,46 @@ export class RautsScanner implements IProjectScanner {
     }
 
     return 'Unknown';
+  }
+
+  /** Fastify `route({ method, url, handler })` — method may be a string or array of verbs. */
+  private extractFastifyRouteObject(obj: ts.ObjectLiteralExpression): Array<{
+    method: HttpMethod;
+    path: string;
+    handler?: ts.Expression;
+  }> {
+    const out: Array<{ method: HttpMethod; path: string; handler?: ts.Expression }> = [];
+    let url = '';
+    let handler: ts.Expression | undefined;
+    const methods: string[] = [];
+
+    for (const prop of obj.properties) {
+      if (!ts.isPropertyAssignment(prop)) continue;
+      const key = prop.name.getText().replace(/['"]/g, '');
+      const init = prop.initializer;
+      if (key === 'url' && ts.isStringLiteral(init)) url = init.text;
+      else if (key === 'handler') handler = init;
+      else if (key === 'method') {
+        if (ts.isStringLiteral(init)) methods.push(init.text);
+        else if (ts.isArrayLiteralExpression(init)) {
+          for (const el of init.elements) {
+            if (ts.isStringLiteral(el)) methods.push(el.text);
+          }
+        }
+      }
+    }
+
+    if (!url) return out;
+    const routePath = url.startsWith('/') ? url : `/${url}`;
+    const allowed = new Set(['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']);
+
+    if (methods.length === 0) return out;
+    for (const m of methods) {
+      const upper = m.toUpperCase();
+      if (!allowed.has(upper)) continue;
+      out.push({ method: upper as HttpMethod, path: routePath, handler });
+    }
+    return out;
   }
 
   private resolveComplexType(item: { type: string }, allFiles: string[], targetList: FieldInfo[]) {
@@ -365,6 +443,42 @@ export class RautsScanner implements IProjectScanner {
 
       if (ts.isCallExpression(node)) {
         const expression = node.expression;
+
+        // Fastify: fastify.route({ method: 'GET', url: '/x', handler })
+        if (
+          ts.isPropertyAccessExpression(expression) &&
+          expression.name.text === 'route' &&
+          node.arguments.length >= 1 &&
+          ts.isObjectLiteralExpression(node.arguments[0])
+        ) {
+          const routeSpecs = this.extractFastifyRouteObject(node.arguments[0]);
+          const routeConfidence: Endpoint['confidence'] =
+            framework === 'Fastify' || framework === 'Unknown' ? 'high' : 'medium';
+          for (const spec of routeSpecs) {
+            const endpoint: Endpoint = {
+              method: spec.method,
+              path: spec.path,
+              confidence: routeConfidence,
+              sourceFile: path.basename(filePath),
+              folder: relativeFolder,
+              params: [],
+              query: [],
+              body: [],
+            };
+            if (spec.handler) {
+              if (ts.isIdentifier(spec.handler)) {
+                this.resolveExpressController(endpoint, '', spec.handler.text, allFiles, rootDir);
+              } else if (ts.isPropertyAccessExpression(spec.handler)) {
+                const ctrl = spec.handler.expression.getText();
+                const method = spec.handler.name.text;
+                this.resolveExpressController(endpoint, ctrl, method, allFiles, rootDir);
+              }
+              this.scanHandler(spec.handler, endpoint, sourceCode);
+            }
+            endpoints.push(endpoint);
+          }
+        }
+
         if (ts.isPropertyAccessExpression(expression)) {
           const methodName = expression.name.text.toLowerCase();
           const methods: string[] = ['get', 'post', 'put', 'delete', 'patch'];
@@ -375,10 +489,13 @@ export class RautsScanner implements IProjectScanner {
               const secondArg = node.arguments[1];
 
               if (ts.isStringLiteral(firstArg)) {
+                const verbConfidence: Endpoint['confidence'] = this.usesExpressStyleRoutes(framework)
+                  ? 'high'
+                  : 'medium';
                 const endpoint: Endpoint = {
                   method: methodName.toUpperCase() as HttpMethod,
                   path: firstArg.text,
-                  confidence: framework === 'Express' ? 'high' : 'medium',
+                  confidence: verbConfidence,
                   sourceFile: path.basename(filePath),
                   folder: relativeFolder,
                   params: [],

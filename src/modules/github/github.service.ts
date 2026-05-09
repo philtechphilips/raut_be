@@ -854,14 +854,17 @@ export class GithubService {
       }
 
       const framework = scanResult.framework || 'Unknown';
-      if (!RAUTS_SUPPORTED_FRAMEWORKS.has(framework)) {
+      const frameworkAllowed =
+        RAUTS_SUPPORTED_FRAMEWORKS.has(framework) ||
+        (framework === 'Unknown' && endpoints.length > 0);
+      if (!frameworkAllowed) {
         this.logger.warn(
           `GitHub document: unsupported framework="${framework}" repo=${repoLabel} routes=${endpoints.length}`,
         );
         throw new BadRequestException(
           'Could not recognize a supported API framework in this repository. ' +
-            'Supported stacks: NestJS (package.json dependency @nestjs/core), Express (express), or Laravel (Composer / PHP routes). ' +
-            'Use a branch that includes those files, or a repo that uses one of these frameworks.',
+            'Supported stacks: NestJS, Express, Fastify, Koa, Hono, Elysia, AdonisJS (via package.json), ' +
+            'or Laravel (Composer / PHP routes). Repositories where routes are detected statically may sync as Unknown.',
         );
       }
       this.logger.log(

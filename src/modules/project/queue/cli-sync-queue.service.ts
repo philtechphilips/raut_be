@@ -36,7 +36,7 @@ export class CliSyncQueueService implements OnModuleDestroy {
       jobId,
       status: 'queued' as const,
       message:
-        'Sync queued. Your CLI can exit now — the dashboard will update shortly.',
+        'Sync queued. We will email you when it finishes. Your CLI can exit now — the dashboard will update shortly.',
     };
   }
 

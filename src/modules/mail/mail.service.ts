@@ -82,6 +82,43 @@ export class MailService {
     return this.send(to, 'Your GitHub documentation import is ready', layoutHtml('Import complete', inner));
   }
 
+  async sendCliSyncCompleteEmail(
+    to: string,
+    detail: {
+      projectName: string;
+      framework: string;
+      endpointCount: number;
+    },
+  ): Promise<boolean> {
+    const dash = `${this.frontendUrl}/dashboard`;
+    const inner = `
+      <p style="margin:0 0 16px 0;">Your CLI sync for project <strong style="color:rgba(255,255,255,0.92);">${this.escapeHtml(detail.projectName)}</strong> finished successfully.</p>
+      <p style="margin:0 0 16px 0;">
+        Framework: <span style="font-family:monospace;color:rgba(207,254,38,0.85);">${this.escapeHtml(detail.framework)}</span> —
+        <strong style="color:rgba(255,255,255,0.92);">${detail.endpointCount}</strong> endpoints synced.
+      </p>
+      <p style="margin:0 0 20px 0;">
+        <a href="${dash}" style="display:inline-block;background:#CFFE26;color:#000000;text-decoration:none;font-weight:600;font-size:14px;padding:12px 22px;border-radius:999px;">Open dashboard</a>
+      </p>
+    `;
+    return this.send(to, 'Your CLI documentation sync is complete', layoutHtml('Sync complete', inner));
+  }
+
+  async sendCliSyncFailedEmail(
+    to: string,
+    detail: { projectName: string; error: string },
+  ): Promise<boolean> {
+    const dash = `${this.frontendUrl}/dashboard`;
+    const inner = `
+      <p style="margin:0 0 16px 0;">We could not finish the CLI sync for <strong style="color:rgba(255,255,255,0.92);">${this.escapeHtml(detail.projectName)}</strong>.</p>
+      <p style="margin:0 0 20px 0;padding:14px 16px;background:#2A2222;border:1px solid #4A3030;border-radius:12px;font-size:13px;color:rgba(255,220,220,0.9);">${this.escapeHtml(detail.error)}</p>
+      <p style="margin:0 0 20px 0;">
+        <a href="${dash}" style="display:inline-block;background:#CFFE26;color:#000000;text-decoration:none;font-weight:600;font-size:14px;padding:12px 22px;border-radius:999px;">Back to dashboard</a>
+      </p>
+    `;
+    return this.send(to, 'CLI documentation sync failed', layoutHtml('Sync failed', inner));
+  }
+
   async sendGithubScanFailedEmail(
     to: string,
     detail: { repoFullName: string; error: string },

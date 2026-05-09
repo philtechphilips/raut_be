@@ -196,10 +196,19 @@ function detectLaravelRoutePrefix(files: string[]): string | undefined {
   return undefined;
 }
 
+const EXPRESS_STYLE_ROUTE_PREFIX_FRAMEWORKS = new Set([
+  'Express',
+  'Fastify',
+  'Koa',
+  'Hono',
+  'Elysia',
+  'AdonisJS',
+]);
+
 export function detectRoutePrefix(framework: string, files: string[]): string | undefined {
   const f = framework.trim();
   if (f === 'NestJS') return detectNestRoutePrefix(files);
-  if (f === 'Express') return detectExpressRoutePrefix(files);
+  if (EXPRESS_STYLE_ROUTE_PREFIX_FRAMEWORKS.has(f)) return detectExpressRoutePrefix(files);
   if (f === 'Laravel') return detectLaravelRoutePrefix(files);
   return undefined;
 }

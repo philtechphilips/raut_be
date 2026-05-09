@@ -4,7 +4,11 @@ import {
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import { Job, Worker } from 'bullmq';
+import { Repository } from 'typeorm';
+import { User } from '../../auth/models/user.model';
+import { MailService } from '../../mail/mail.service';
 import {
   PROJECT_CLI_SYNC_QUEUE_NAME,
   type CliProjectSyncJobPayload,
@@ -17,7 +21,12 @@ export class CliSyncWorkerService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(CliSyncWorkerService.name);
   private worker: Worker | undefined;
 
-  constructor(private readonly projects: ProjectService) {}
+  constructor(
+    private readonly projects: ProjectService,
+    @InjectRepository(User)
+    private readonly users: Repository<User>,
+    private readonly mail: MailService,
+  ) {}
 
   onModuleInit() {
     const concurrency = Math.max(
@@ -32,10 +41,28 @@ export class CliSyncWorkerService implements OnModuleInit, OnModuleDestroy {
         concurrency,
       },
     );
-    this.worker.on('failed', (job, err) => {
+    this.worker.on('failed', async (job, err) => {
       if (job) {
         this.logger.warn(
           `CLI sync job failed id=${job.id} — ${err instanceof Error ? err.message : err}`,
+        );
+      }
+      if (!job) return;
+      try {
+        const state = await job.getState();
+        if (state !== 'failed') return;
+
+        const user = await this.users.findOne({ where: { id: job.data.userId } });
+        if (!user?.email) return;
+
+        await this.mail.sendCliSyncFailedEmail(user.email, {
+          projectName: job.data.dto.name,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      } catch (e) {
+        this.logger.error(
+          `CLI sync failure email failed jobId=${job?.id}`,
+          e instanceof Error ? e.stack : undefined,
         );
       }
     });
@@ -49,6 +76,25 @@ export class CliSyncWorkerService implements OnModuleInit, OnModuleDestroy {
 
   private async processJob(job: Job<CliProjectSyncJobPayload>) {
     const { userId, dto } = job.data;
-    return this.projects.sync(userId, dto);
+    const user = await this.users.findOne({ where: { id: userId } });
+
+    const result = await this.projects.sync(userId, dto);
+
+    if (user?.email) {
+      try {
+        await this.mail.sendCliSyncCompleteEmail(user.email, {
+          projectName: dto.name,
+          framework: dto.framework,
+          endpointCount: dto.endpoints?.length ?? 0,
+        });
+      } catch (e) {
+        this.logger.error(
+          `CLI sync complete email failed jobId=${job.id}`,
+          e instanceof Error ? e.stack : undefined,
+        );
+      }
+    }
+
+    return result;
   }
 }
