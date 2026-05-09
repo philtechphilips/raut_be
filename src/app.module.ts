@@ -7,6 +7,7 @@ import { AiModule } from './modules/ai/ai.module';
 import { RequestHistoryModule } from './modules/request-history/request-history.module';
 import { GithubModule } from './modules/github/github.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { LocalRequestModule } from './modules/local-request/local-request.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { AdminModule } from './modules/admin/admin.module';
     RequestHistoryModule,
     GithubModule,
     AdminModule,
+    LocalRequestModule,
   ],
 })
 export class AppModule {}
