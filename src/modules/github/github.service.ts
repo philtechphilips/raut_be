@@ -722,6 +722,17 @@ export class GithubService {
     }
     try {
       await this.exchangeCodeAndSave(verified.userId, code);
+      const slug = process.env.GITHUB_APP_SLUG?.trim();
+      if (slug && isGithubAppConfigured()) {
+        const installCount = await this.githubAppInstallations.count({
+          where: { userId: verified.userId },
+        });
+        if (installCount === 0) {
+          const installUrl = `https://github.com/apps/${encodeURIComponent(slug)}/installations/new`;
+          res.redirect(installUrl);
+          return;
+        }
+      }
       res.redirect(`${frontend.replace(/\/+$/, '')}/dashboard?github=connected`);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'connect_failed';

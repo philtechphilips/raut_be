@@ -85,6 +85,8 @@ Register the app under GitHub → Settings → Developer settings → GitHub App
 3. **Permissions**: Repository contents **Read-only** (clone); Metadata **Read** is usually granted by default.
 4. **Setup URL** (optional but recommended): your frontend dashboard URL (e.g. `https://app.example.com/dashboard`). After install, GitHub redirects with `?installation_id=` so the client can call `POST /api/github/app/link-installation`.
 
+After **Connect GitHub** (OAuth) succeeds, if `GITHUB_APP_SLUG` and app key env are set and this user has **no** linked installation yet, the API redirects them straight to **`https://github.com/apps/<slug>/installations/new`** so install is not a separate manual step.
+
 URLs:
 
 - `API_PUBLIC_URL` (used for GitHub callback fallback; include `/api` if your API lives under `/api`, see webhook examples above)

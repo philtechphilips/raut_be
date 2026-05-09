@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import {
   CurrentUser,
@@ -13,8 +13,14 @@ export class RequestHistoryController {
   constructor(private readonly requestHistoryService: RequestHistoryService) {}
 
   @Get()
-  async list(@CurrentUser() user: CurrentUserPayload) {
-    const entries = await this.requestHistoryService.listEntries(user.id);
+  async list(
+    @CurrentUser() user: CurrentUserPayload,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    const take = limit ? parseInt(limit, 10) : 100;
+    const skip = offset ? parseInt(offset, 10) : 0;
+    const entries = await this.requestHistoryService.listEntries(user.id, take, skip);
     return { entries };
   }
 

@@ -3,8 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { UserRequestHistory } from './models/request-history.model';
 import { AppendRequestHistoryDto } from './dto/append-request-history.dto';
+import { paginate } from '../../db/pagination.utils';
 
-const MAX_ENTRIES = 100;
+const MAX_ENTRIES = 500;
 
 @Injectable()
 export class RequestHistoryService {
@@ -13,13 +14,21 @@ export class RequestHistoryService {
     private readonly repo: Repository<UserRequestHistory>,
   ) {}
 
-  async listEntries(userId: string): Promise<Record<string, unknown>[]> {
-    const rows = await this.repo.find({
-      where: { userId },
-      order: { at: 'DESC' },
-      take: MAX_ENTRIES,
-    });
-    return rows.map((r) => ({
+  async listEntries(
+    userId: string,
+    take: number = 100,
+    skip: number = 0,
+  ): Promise<Record<string, unknown>[]> {
+    const paginated = await paginate(
+      this.repo,
+      {
+        where: { userId },
+        order: { at: 'DESC' },
+      },
+      { limit: take, offset: skip },
+    );
+
+    return paginated.data.map((r) => ({
       ...r.payload,
       id: r.id,
       at: Number(r.at),

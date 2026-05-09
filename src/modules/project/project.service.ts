@@ -118,6 +118,25 @@ export class ProjectService {
     const tripleKey = (method: string, path: string, category: string) =>
       `${normMethod(method)}\t${path}\t${normCat(category)}`;
 
+    /** When true, scan-detected route identity matches DB — skip row update to preserve manual edits. */
+    const isScanStructureUnchanged = (
+      row: Endpoint,
+      ep: SyncEndpointDto,
+      resolvedAnchor: string | null,
+      resolvedFp: string | null,
+    ): boolean => {
+      const fpRow = (row.handlerFingerprint ?? '').trim().toLowerCase();
+      const fpIn = (resolvedFp ?? '').trim().toLowerCase();
+      return (
+        normMethod(row.method) === normMethod(ep.method) &&
+        row.path === ep.path &&
+        normCat(row.category) === normCat(ep.category) &&
+        row.sourceFile === ep.sourceFile &&
+        normAnchor(row.syncAnchor) === normAnchor(resolvedAnchor) &&
+        fpRow === fpIn
+      );
+    };
+
     const consumedIds = new Set<string>();
 
     const pickMatchingEndpoint = (
@@ -195,21 +214,29 @@ export class ProjectService {
 
       if (matched) {
         consumedIds.add(matched.id);
-        matched.method = ep.method;
-        matched.path = ep.path;
-        matched.name = ep.name;
-        matched.category = ep.category;
-        matched.sourceFile = ep.sourceFile;
-        matched.syncAnchor = syncAnchor;
-        matched.handlerFingerprint = handlerFingerprint;
-        matched.description = ep.description ?? null;
-        matched.body = ep.body ?? null;
-        matched.scenarios = scenarios;
-        matched.params = ep.params ?? null;
-        matched.query = ep.query ?? null;
-        matched.headers = ep.headers ?? null;
-        matched.responseSummary = ep.response ?? null;
-        toPersist.push(matched);
+        if (isScanStructureUnchanged(matched, ep, syncAnchor, handlerFingerprint)) {
+          if (matched.sortOrder !== globalIdx) {
+            matched.sortOrder = globalIdx;
+            toPersist.push(matched);
+          }
+        } else {
+          matched.method = ep.method;
+          matched.path = ep.path;
+          matched.name = ep.name;
+          matched.category = ep.category;
+          matched.sourceFile = ep.sourceFile;
+          matched.syncAnchor = syncAnchor;
+          matched.handlerFingerprint = handlerFingerprint;
+          matched.description = ep.description ?? null;
+          matched.body = ep.body ?? null;
+          matched.scenarios = scenarios;
+          matched.params = ep.params ?? null;
+          matched.query = ep.query ?? null;
+          matched.headers = ep.headers ?? null;
+          matched.responseSummary = ep.response ?? null;
+          matched.sortOrder = globalIdx;
+          toPersist.push(matched);
+        }
       } else {
         toPersist.push(
           this.endpointRepository.create({
@@ -705,7 +732,7 @@ export class ProjectService {
       if (!exists) byCategory.set(n, []);
     }
 
-    const folderNames = this.orderedFolderNamesForDocs(project, byCategory);
+    const folderNames = [...byCategory.keys()].sort((a, b) => a.localeCompare(b));
     const folders = folderNames.map((name) => ({
       name,
       description: this.folderOverviewText(project, name),
@@ -720,42 +747,9 @@ export class ProjectService {
       version: project.framework || 'API',
       baseUrl: project.docsBaseUrl?.trim() || 'https://api.example.com',
       description: project.description ?? '',
+      docsPublished: project.docsPublished,
       folders,
     };
-  }
-
-  private orderedFolderNamesForDocs(
-    project: Project,
-    byCategory: Map<string, Endpoint[]>,
-  ): string[] {
-    const keys = [...byCategory.keys()];
-    const order = project.folderOrder ?? [];
-    if (!order.length) {
-      return keys.sort((a, b) => a.localeCompare(b));
-    }
-    return this.sortFoldersByOrderPublished(keys, order);
-  }
-
-  private sortFoldersByOrderPublished(
-    folderKeys: string[],
-    folderOrder: string[],
-  ): string[] {
-    const out: string[] = [];
-    const used = new Set<string>();
-    const lowerToKey = new Map(
-      folderKeys.map((k) => [k.trim().toLowerCase(), k] as const),
-    );
-    for (const name of folderOrder) {
-      const canon = lowerToKey.get(name.trim().toLowerCase());
-      if (canon && !used.has(canon.toLowerCase())) {
-        out.push(canon);
-        used.add(canon.toLowerCase());
-      }
-    }
-    for (const k of folderKeys) {
-      if (!used.has(k.trim().toLowerCase())) out.push(k);
-    }
-    return out;
   }
 
   private folderOverviewText(project: Project, folderName: string): string {
