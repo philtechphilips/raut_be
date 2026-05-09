@@ -58,6 +58,7 @@ Redis (BullMQ queue):
 - `REDIS_URL` (recommended)
 - or `REDIS_HOST`, `REDIS_PORT`, `REDIS_USERNAME`, `REDIS_PASSWORD`
 - `GITHUB_SCAN_CONCURRENCY` (default `3`)
+- `PROJECT_CLI_SYNC_CONCURRENCY` — parallel workers for CLI `POST /api/projects/sync` jobs (default `5`)
 
 GitHub OAuth / GitHub import:
 
@@ -112,7 +113,8 @@ CLI auth:
 
 - `POST /api/auth/*` - register, login, verify email, reset password, update profile
 - `POST /api/auth/cli/device` and `POST /api/auth/cli/poll` - CLI browser login flow
-- `POST /api/projects/sync` - sync scanned project into dashboard data
+- `POST /api/projects/sync` - enqueue CLI/dashboard sync job (returns `jobId`; worker applies payload to DB)
+- `GET /api/projects/sync/jobs/:jobId` - poll CLI sync job status (`queued` → `running` → `completed` / `failed`)
 - `GET /api/projects/list` - list user projects/collections
 - `POST /api/ai/enrich-endpoint` and `POST /api/ai/analyze-project` - AI enrichment endpoints
 - `POST /api/github/scan` - enqueue GitHub scan job
@@ -131,4 +133,4 @@ CLI auth:
 - **`invalid_state` on GitHub connect:** Restart the API after changing `.env`, ensure **`JWT_SECRET`** (or **`GITHUB_OAUTH_STATE_SECRET`**) is stable, **`NEXT_PUBLIC_API_URL`** points at this backend, and the GitHub App/OAuth **Authorization callback URL** matches **`GITHUB_OAUTH_CALLBACK_URL`** (or `{API_PUBLIC_URL}/github/oauth/callback`) exactly.
 
 - TypeORM is configured with `synchronize: true` in current code. Use caution in production and prefer migrations for long-term safety.
-- GitHub scans run asynchronously through Redis/BullMQ and send completion/failure emails.
+- GitHub scans and **`POST /api/projects/sync`** (CLI) run asynchronously through Redis/BullMQ (CLI exits immediately unless `--wait-sync`). GitHub scans send completion/failure emails.

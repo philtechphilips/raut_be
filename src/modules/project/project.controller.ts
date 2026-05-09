@@ -26,15 +26,27 @@ import { ReorderFoldersDto } from './dto/reorder-folders.dto';
 import { ReorderEndpointsDto } from './dto/reorder-endpoints.dto';
 import { CreateFolderDto } from './dto/create-folder.dto';
 import { CreateEndpointDto } from './dto/create-endpoint.dto';
+import { CliSyncQueueService } from './queue/cli-sync-queue.service';
 
 @Controller('projects')
 @UseGuards(JwtAuthGuard)
 export class ProjectController {
-  constructor(private readonly projectService: ProjectService) {}
+  constructor(
+    private readonly projectService: ProjectService,
+    private readonly cliSyncQueue: CliSyncQueueService,
+  ) {}
 
   @Post('sync')
   sync(@CurrentUser() user: CurrentUserPayload, @Body() dto: SyncProjectDto) {
-    return this.projectService.sync(user.id, dto);
+    return this.cliSyncQueue.enqueueSync(user.id, dto);
+  }
+
+  @Get('sync/jobs/:jobId')
+  syncJobStatus(
+    @CurrentUser() user: CurrentUserPayload,
+    @Param('jobId', new ParseUUIDPipe()) jobId: string,
+  ) {
+    return this.cliSyncQueue.getJobForUser(user.id, jobId);
   }
 
   @Get('list')
