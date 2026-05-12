@@ -4,7 +4,9 @@ import { AppModule } from './app.module';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bodyParser: true, rawBody: true });
+  const app = await NestFactory.create(AppModule, { bodyParser: false, rawBody: true });
+  app.use(require('express').json({ limit: '10mb' }));
+  app.use(require('express').urlencoded({ limit: '10mb', extended: true }));
 
   app.enableCors();
   app.setGlobalPrefix('api');
